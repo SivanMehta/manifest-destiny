@@ -1,0 +1,23 @@
+{
+  "name": "manifest-destiny",
+  "version": "0.0.0",
+  "description": "scraping matthew's digest",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo lol you want tests",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SivanMehta/manifest-destiny.git"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/SivanMehta/manifest-destiny/issues"
+  },
+  "homepage": "https://github.com/SivanMehta/manifest-destiny#readme",
+  "dependencies": {
+    "puppeteer": "^5.5.0"
+  }
+}
