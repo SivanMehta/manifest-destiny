@@ -15,7 +15,7 @@ function config(name) {
   };
 }
 
-async function run(uri) {
+async function save(uri) {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   await page.goto(uri, { waitUntil: 'networkidle2' });
@@ -24,5 +24,5 @@ async function run(uri) {
   await browser.close();
 }
 
-const uri = 'https://athletics.cmu.edu/sports/mswimdive/2016-17/bios/ferzacca_dustin_swih?view=bio';
-run(uri);
+const root = 'https://athletics.cmu.edu/sports/mswimdive/2016-17/bios/ferzacca_dustin_swih?view=bio';
+save(root);

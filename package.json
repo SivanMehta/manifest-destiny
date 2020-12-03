@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/SivanMehta/manifest-destiny#readme",
   "dependencies": {
+    "p-limit": "^3.1.0",
     "puppeteer": "^5.5.0"
   }
 }
