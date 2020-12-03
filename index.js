@@ -1,9 +1,10 @@
 const puppeteer = require('puppeteer');
 const iPad = puppeteer.devices['iPad'];
+const path = require('path')
 
 function config(name) {
   return {
-    path: `${name}.pdf`,
+    path: `pdfs/${name}.pdf`,
     format: 'A4',
     printBackground: true,
     margin: { // Word's default A4 margins
