@@ -1,4 +1,4 @@
 node_modules
 pdfs/*.pdf
 creds.json
-texts/
+texts/*.txt

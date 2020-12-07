@@ -115,7 +115,7 @@ async function writeAsText(chapter, page) {
   }
 
   const text = await page.$$eval('div.co_paragraph', ps => ps.map(p => p.innerText).join('\n\n'))
-  const filename = 'texts/' + title.replace('§ ', '') + '.txt';
+  const filename = 'texts/' + title.replace('§ ', '').replace('/', '-') + '.txt';
   console.log('Saving', filename);
   await write(filename, text);
 }
@@ -123,7 +123,7 @@ async function writeAsText(chapter, page) {
 async function queueDownloads(browser, page) {
   const chapters = require('./chapters.json');
   
-  for (let i = 0; i < chapters.length; i ++) {
+  for (let i = 1194; i < chapters.length; i ++) {
     await writeAsText(chapters[i], page);
   }
 }
