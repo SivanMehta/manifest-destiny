@@ -7,16 +7,16 @@ const creds = require('./creds.json');
 /**
  * Pause main thread for a fiven number of seconds
  *
- * @param {Number} s
+ * @param {Number} seconds
  * @returns {Promise} to resolve after given number of seconds
  */
-function sleep(s) {
-  return new Promise(r => setTimeout(r, 1000 * s));
+function sleep(seconds) {
+  return new Promise(r => setTimeout(r, 1000 * seconds));
 }
 
 async function start() {
-  const browser = await puppeteer.launch({ headless: false });
-  // const browser = await puppeteer.launch();
+  // const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
   return { browser, page };
@@ -85,7 +85,7 @@ async function expand(page) {
 }
 
 async function download(chapter, page) {
-  const { href, title } = chapters[i];
+  const { href, title } = chapter;
   if (/Research References/.test(title)) {
     return;
   }
@@ -97,10 +97,9 @@ async function download(chapter, page) {
     await auth(page);
   }
 
-  console.log('Saving', title, i);
-  sleep(2);
-  await save(page, title);
-  await page.close();
+  const filename = title.replace('§ ', '');
+  console.log('Saving', filename);
+  await page.pdf(pdf(filename));
 }
 
 async function queueDownloads(browser, page) {
