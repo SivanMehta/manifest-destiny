@@ -102,11 +102,25 @@ async function download(chapter, page) {
   await page.pdf(pdf(filename));
 }
 
+async function writeAsText(chapter, page) {
+  const { href, title } = chapter;
+  if (/Research References/.test(title)) {
+    return;
+  }
+
+  await page.goto(href, { waitUntil: 'networkidle2' });
+
+  const text = await page.$$eval('div.co_paragraph', ps => ps.map(p => p.innerText).join('\n\n'))
+  const filename = 'texts/' + title.replace('§ ', '') + '.txt';
+  console.log('Saving', filename);
+  await write(filename, text);
+}
+
 async function queueDownloads(browser, page) {
   const chapters = require('./chapters.json');
   
   for (let i = 0; i < chapters.length; i ++) {
-    await download(chapters[i], page)
+    await writeAsText(chapters[i], page);
   }
 }
 
