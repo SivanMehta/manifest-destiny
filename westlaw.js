@@ -31,6 +31,7 @@ async function auth(page) {
   await page.click('#SignIn');
   await sleep(5);
 
+  console.log('starting session');
   await page.click('#co_clientIDContinueButton');
   await sleep(5);
 }
@@ -69,13 +70,20 @@ async function getExpansions(page) {
 
 async function expand(page) {
   let expansions = await getExpansions(page);
-  let seen = 0;
+  let seen = expansions.length;
 
   // expand every chapter subheading
   while(expansions.length > 1) {
+    console.log('Expanding', seen, 'of 3580 sections');
     for(let i = 0; i < expansions.length; i ++) {
-      await expansions[i].click();
-      await sleep(0.2);
+      const element = expansions[i];
+      const id = await element.getProperty('id');
+      try {
+        await page.waitForSelector(`#${id.toString().replace('JSHandle:', '')}`);
+        await element.click();
+      } catch(e) {
+        console.log('could not expand', id);
+      }
     }
 
     expansions = await getExpansions(page);
@@ -83,23 +91,35 @@ async function expand(page) {
   }
 }
 
-async function download(browser, page) {
+async function download(chapter, browser) {
+  const { href, title } = chapters[i];
+  if (/Research References/.test(title)) {
+    continue;
+  }
+  const chapterTab = await browser.newPage();
+  await chapterTab.goto(href, { waitUntil: 'networkidle2' });
+
+  const pw = await page.$$('#Password');
+  if(pw.length > 1) {
+    await auth(chapterTab);
+  }
+
+  console.log('Saving', title, i);
+  sleep(2);
+  await save(chapterTab, title);
+  chapterTab.close();
+}
+
+async function queueDownloads(browser, page) {
   const chapters = await page.$$eval('a.co_tocItemLink', elements => elements.map(element => ({
     href: element.getAttribute("href"),
     title: element.innerText
   })));
+
+  console.log('There are', chapters.length, 'chapters to download');
   
-  for (let i = 0; i < chapter.length; i ++) {
-    const { href, title } = chapters[i];
-    if ('Research References'.test(title)) {
-      continue;
-    }
-    const chapterTab = await browser.newPage();
-    await chapterTab.goto(href, { waitUntil: 'networkidle2' });
-    console.log('Saving', title);
-    sleep(2);
-    await save(chapterTab, title);
-    chapterTab.close();
+  for (let i = 0; i < chapters.length; i ++) {
+    await download(chapters[i], browser)
   }
 }
 
@@ -116,12 +136,12 @@ async function run() {
   await page.goto(TOC, { waitUntil: 'networkidle2' });
   await sleep(2);
 
-  console.log('expanding page');
+  console.log('expanding TOC');
   await expand(page);
   await sleep(5);
 
   console.log('downloading links');
-  await download(browser, page);
+  await queueDownloads(browser, page);
 
   await browser.close();
 }
