@@ -2,8 +2,14 @@ const puppeteer = require('puppeteer');
 const iPad = puppeteer.devices['iPad'];
 const creds = require('./creds.json');
 
-function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms));
+/**
+ * Pause main thread for a fiven number of seconds
+ *
+ * @param {Number} s
+ * @returns {Promise} to resolve after given number of seconds
+ */
+function sleep(s) {
+  return new Promise(r => setTimeout(r, 1000 * s));
 }
 
 async function start() {
@@ -23,10 +29,10 @@ async function auth(page) {
   await page.type('#Username', creds.username, {delay: 100});
   await page.type('#Password', creds.password, {delay: 100});
   await page.click('#SignIn');
-  await sleep(5000);
+  await sleep(5);
 
   await page.click('#co_clientIDContinueButton');
-  await sleep(3000);
+  await sleep(5);
 }
 
 function pdf(name) {
@@ -61,18 +67,24 @@ async function getExpansions(page) {
   return await page.$$('.co_genericExpand');
 }
 
-async function spider(page) {
+async function expand(page) {
   let expansions = await getExpansions(page);
+  let seen = expansions.length;
 
   // expand every chapter subheading
-  while(expansions.length > 1) {
+  while(expansions.length > 1 && seen < 100) {
     for(let i = 0; i < expansions.length; i ++) {
       await expansions[i].click();
-      await sleep(200);
+      await sleep(0.2);
     }
 
     expansions = await getExpansions(page);
+    seen += expansions.length;
   }
+}
+
+async function download(page) {
+
 }
 
 async function run() {
@@ -86,10 +98,14 @@ async function run() {
 
   console.log('going to TOC');
   await page.goto(TOC, { waitUntil: 'networkidle2' });
-  await sleep(5000);
+  await sleep(5);
 
-  console.log('spidering page');
-  await spider(page);
+  console.log('expanding page');
+  await expand(page);
+  await sleep(5);
+
+  console.log('downloading links');
+  await download(page);
 
   await browser.close();
 }
