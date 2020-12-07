@@ -1,4 +1,6 @@
 const puppeteer = require('puppeteer');
+const fs = require('fs');
+const write = require('util').promisify(fs.writeFile);
 const iPad = puppeteer.devices['iPad'];
 const creds = require('./creds.json');
 
@@ -13,8 +15,8 @@ function sleep(s) {
 }
 
 async function start() {
-  // const browser = await puppeteer.launch({ headless: false });
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({ headless: false });
+  // const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
   return { browser, page };
@@ -75,51 +77,37 @@ async function expand(page) {
   // expand every chapter subheading
   while(expansions.length > 1) {
     console.log('Expanding', seen, 'of 3580 sections');
-    for(let i = 0; i < expansions.length; i ++) {
-      const element = expansions[i];
-      const id = await element.getProperty('id');
-      try {
-        await page.waitForSelector(`#${id.toString().replace('JSHandle:', '')}`);
-        await element.click();
-      } catch(e) {
-        console.log('could not expand', id);
-      }
-    }
+    await page.$$eval('a.co_genericExpand', links => links.forEach(link => link.click()));
 
     expansions = await getExpansions(page);
     seen += expansions.length;
   }
 }
 
-async function download(chapter, browser) {
+async function download(chapter, page) {
   const { href, title } = chapters[i];
   if (/Research References/.test(title)) {
-    continue;
+    return;
   }
-  const chapterTab = await browser.newPage();
-  await chapterTab.goto(href, { waitUntil: 'networkidle2' });
+
+  await page.goto(href, { waitUntil: 'networkidle2' });
 
   const pw = await page.$$('#Password');
   if(pw.length > 1) {
-    await auth(chapterTab);
+    await auth(page);
   }
 
   console.log('Saving', title, i);
   sleep(2);
-  await save(chapterTab, title);
-  chapterTab.close();
+  await save(page, title);
+  await page.close();
 }
 
 async function queueDownloads(browser, page) {
-  const chapters = await page.$$eval('a.co_tocItemLink', elements => elements.map(element => ({
-    href: element.getAttribute("href"),
-    title: element.innerText
-  })));
-
-  console.log('There are', chapters.length, 'chapters to download');
+  const chapters = require('./chapters.json');
   
   for (let i = 0; i < chapters.length; i ++) {
-    await download(chapters[i], browser)
+    await download(chapters[i], page)
   }
 }
 
@@ -132,13 +120,13 @@ async function run() {
   console.log('authorizing');
   await auth(page);  
 
-  console.log('going to TOC');
-  await page.goto(TOC, { waitUntil: 'networkidle2' });
-  await sleep(2);
+  // console.log('going to TOC');
+  // await page.goto(TOC, { waitUntil: 'networkidle2' });
+  // await sleep(2);
 
-  console.log('expanding TOC');
-  await expand(page);
-  await sleep(5);
+  // console.log('expanding TOC');
+  // await expand(page);
+  // await sleep(5);
 
   console.log('downloading links');
   await queueDownloads(browser, page);
