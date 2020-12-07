@@ -109,6 +109,10 @@ async function writeAsText(chapter, page) {
   }
 
   await page.goto(href, { waitUntil: 'networkidle2' });
+  const pw = await page.$$('#Password');
+  if(pw.length > 1) {
+    await auth(page);
+  }
 
   const text = await page.$$eval('div.co_paragraph', ps => ps.map(p => p.innerText).join('\n\n'))
   const filename = 'texts/' + title.replace('§ ', '') + '.txt';
