@@ -13,8 +13,8 @@ function sleep(s) {
 }
 
 async function start() {
-  let browser;
-  browser = await puppeteer.launch({ headless: false });
+  // const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
   return { browser, page };
@@ -69,10 +69,10 @@ async function getExpansions(page) {
 
 async function expand(page) {
   let expansions = await getExpansions(page);
-  let seen = expansions.length;
+  let seen = 0;
 
   // expand every chapter subheading
-  while(expansions.length > 1 && seen < 100) {
+  while(expansions.length > 1 && seen < 10) {
     for(let i = 0; i < expansions.length; i ++) {
       await expansions[i].click();
       await sleep(0.2);
@@ -83,8 +83,24 @@ async function expand(page) {
   }
 }
 
-async function download(page) {
-
+async function download(browser, page) {
+  const chapters = await page.$$eval('a.co_tocItemLink', elements => elements.map(element => ({
+    href: element.getAttribute("href"),
+    title: element.innerText
+  })));
+  
+  for (let i = 0; i < 10; i ++) {
+    const { href, title } = chapters[i];
+    if (title === 'Research References') {
+      continue;
+    }
+    const chapterTab = await browser.newPage();
+    await chapterTab.goto(href, { waitUntil: 'networkidle2' });
+    console.log('Saving', title);
+    sleep(2);
+    await save(chapterTab, title);
+    chapterTab.close();
+  }
 }
 
 async function run() {
@@ -98,14 +114,14 @@ async function run() {
 
   console.log('going to TOC');
   await page.goto(TOC, { waitUntil: 'networkidle2' });
-  await sleep(5);
+  await sleep(2);
 
   console.log('expanding page');
   await expand(page);
   await sleep(5);
 
   console.log('downloading links');
-  await download(page);
+  await download(browser, page);
 
   await browser.close();
 }
