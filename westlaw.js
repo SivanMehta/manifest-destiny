@@ -72,7 +72,7 @@ async function expand(page) {
   let seen = 0;
 
   // expand every chapter subheading
-  while(expansions.length > 1 && seen < 10) {
+  while(expansions.length > 1) {
     for(let i = 0; i < expansions.length; i ++) {
       await expansions[i].click();
       await sleep(0.2);
@@ -89,9 +89,9 @@ async function download(browser, page) {
     title: element.innerText
   })));
   
-  for (let i = 0; i < 10; i ++) {
+  for (let i = 0; i < chapter.length; i ++) {
     const { href, title } = chapters[i];
-    if (title === 'Research References') {
+    if ('Research References'.test(title)) {
       continue;
     }
     const chapterTab = await browser.newPage();
